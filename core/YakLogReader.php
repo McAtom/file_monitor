@@ -11,7 +11,7 @@ class YakLogReader {
 
     private $recorde_file = "";             //文件指针记录到文件里面
     private $record_lines = array();        //记录文件指针行数
-    private $limit_line = 3000;             //一次事件只能读3000条记录
+    private $limit_line = 3000;             //一次事件只能读3000条记录，还没做限制
 
     /**
      * data/logs/login/20190322
@@ -27,28 +27,30 @@ class YakLogReader {
     }
 
     /**
+     * @param $logtype
      * @param $file
-     * @param $line_no
      * 根据指针来读数据
      */
-    public function readLines($file) {
+    public function readLines($logtype, $file) {
         $file_obj = new SplFileObject($file, "r");
         $line_no = $this->getLineNo($file);
         YakTools::Logger("{$file}=开始行号：{$line_no}");
         $file_obj->seek($line_no);
         $line_index = 0;
-        while(!$file_obj->eof() || $line_index < $this->limit_line) {
+        while(!$file_obj->eof()) {
             $line_info = $file_obj->current();
             $line_index++;
             $file_obj->next();
             $line_info = trim($line_info);
             if(trim($line_info) == "") continue;
-            file_put_contents(YAK_LOG."/runtime/test.log", $line_info."\n", FILE_APPEND);
+            //todo:这里可以处理数据的流向
+            file_put_contents(YAK_LOG."/runtime/test.log", "【{$logtype}】... {$line_info}\n", FILE_APPEND);
         }
         $line_index = $line_index == 0 ? 0 : $line_index -1 ;
         $new_line_no = $line_no + $line_index;
         YakTools::Logger("{$file}=结束行号：{$new_line_no}");
         $this->record_lines[$file] = $new_line_no;
+        $this->saveFileLineNo();
     }
 
     /**
@@ -63,6 +65,7 @@ class YakLogReader {
 
     /**
      * 保存行号到文件里面
+     * todo: 改成使用sqlite来存储数据，读也是一样原理
      */
     public function saveFileLineNo() {
         if(!empty($this->record_lines)) {

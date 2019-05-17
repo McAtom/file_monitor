@@ -24,7 +24,7 @@ class YakInotify {
 
 
     /**
-     * YakInotify2 constructor.
+     * YakInotify constructor.
      * @param $param
      * monitor_name, log_name, work_id, log_path
      */
@@ -67,12 +67,15 @@ class YakInotify {
                         $change_file = "{$path}/{$event['name']}";
                         $change_event = $this->monitor_mask[$event['mask']][0];
                         YakTools::Logger("{$change_file}: {$change_event} ({$this->monitor_mask[$event['mask']][1]})", $this->param['monitor_name']);
+
                         if($change_event =='IN_CREATE' && is_dir($change_file)) {
                             if($this->checkNewDirIfMonitor($path, $event['name'])) {
                                 $this->initInotify($change_file);
                             }
+
                         } else if($change_event == 'IN_MODIFY' && is_file($change_file)) {
                             $this->checkNewFileMonitor($path, $event['name']);
+
                         }  else if($change_event =='IN_DELETE_SELF') {
                             $this->removeWatch($change_file);
                         }
@@ -81,12 +84,15 @@ class YakInotify {
             }
             $div = microtime(true) - $t1;
             YakTools::Logger("({$this->param['log_path']})时间差：{$div}");
+
             sleep($this->monitor_loop_time);
-            //定期检查数据
+
+            //定期检查清理无用变量
             $this->logread_now_times++;
             if($this->logread_now_times >= $this->logread_save_times) {
                 $this->clearResource();
             }
+
             YakTools::Logger("======华丽的分割线======", $this->param['monitor_name']);
         }
     }
@@ -119,7 +125,7 @@ class YakInotify {
         $flag = YakTools::checkMonitorFileFormart($filename);
         if($flag === true) {
             if(!empty($this->logread_handle[$path])) {
-                $this->logread_handle[$path]->readLines($file);
+                $this->logread_handle[$path]->readLines($this->param['log_name'], $file);
             } else {
                 YakTools::Logger("logread没实例化[{$path}]",$this->param['monitor_name']);
             }
@@ -167,7 +173,7 @@ class YakInotify {
 
     /**
      * 定时执行操作
-     * 1、把filepoint保存到数据里面。
+     * 1、把filepoint保存到数据里面。ps 这个步骤已经移动到logreader，每读一次，就保存一次
      * 2、清除filepoint 的对象。
      * 3、清除watcher对象。
      * 4、清除inotify对象。
@@ -177,7 +183,6 @@ class YakInotify {
         $this->logread_now_times = 0;
         $date = date("Ymd", time() - 43200);
         foreach ($this->logread_handle as $file_dir => $handle) {
-            $handle->saveFileLineNo();          //存储point
             $file_arr = YakTools::explodeFileName($file_dir);
             if($file_arr['file_date'] < $date) {
                 unset($this->logread_handle[$file_dir]);

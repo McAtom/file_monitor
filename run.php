@@ -8,7 +8,8 @@
 include dirname(__FILE__)."/core/YakAutoFile.php";
 
 $swoole = new YakSwoole();
-$swoole->startInotify();
+$monitor_name = "test";
+$swoole->startInotify($monitor_name);
 
 
 
