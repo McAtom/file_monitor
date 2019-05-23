@@ -5,7 +5,7 @@
  * Date: 2019-05-23
  * Time: 10:31
  */
-include_once "config.php";
+include_once "YakFileConfig.php";
 
 class YakStorageFile implements YakInterface {
 
