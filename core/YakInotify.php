@@ -14,7 +14,7 @@ class YakInotify {
     private $monitor_mask = array();
 
     private $monitor_time_range = 1;        //监控日志事件1表示当天，2表示近2天
-    private $monitor_loop_time = 2;         //轮询2秒检查一次
+    private $monitor_loop_time = 1;         //轮询2秒检查一次
     private $fd_inotify = array();          //监控句柄，需要定时清除
     private $watch_handle = array();        //好像用不到
     //监控文件的几个事件
@@ -26,7 +26,7 @@ class YakInotify {
     /**
      * YakInotify constructor.
      * @param $param
-     * monitor_name, log_name, work_id, log_path
+     * monitor_name, log_type, work_id, log_path
      */
     public function __construct($param) {
         //todo:检查必须的参数
@@ -63,6 +63,8 @@ class YakInotify {
             foreach ($this->fd_inotify as $path => $handle){
                 $events = inotify_read($handle);
                 if ($events) {
+                    $events = YakTools::eventUnique($events);
+                    print_r($events);
                     foreach ($events as $event){
                         $change_file = "{$path}/{$event['name']}";
                         $change_event = $this->monitor_mask[$event['mask']][0];
@@ -125,7 +127,7 @@ class YakInotify {
         $flag = YakTools::checkMonitorFileFormart($filename);
         if($flag === true) {
             if(!empty($this->logread_handle[$path])) {
-                $this->logread_handle[$path]->readLines($this->param['log_name'], $file);
+                $this->logread_handle[$path]->readLines($this->param, $file);
             } else {
                 YakTools::Logger("logread没实例化[{$path}]",$this->param['monitor_name']);
             }

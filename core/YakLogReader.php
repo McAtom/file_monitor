@@ -11,6 +11,7 @@ class YakLogReader {
 
     private $recorde_file = "";             //文件指针记录到文件里面
     private $record_lines = array();        //记录文件指针行数
+    private $storage;
     private $limit_line = 3000;             //一次事件只能读3000条记录，还没做限制
 
     /**
@@ -22,6 +23,7 @@ class YakLogReader {
         if(!file_exists($dir)) {
             mkdir($dir, 0777, true);
         }
+        $this->storage = new YakStorage();
         $this->recorde_file = "{$dir}/{$explode_arr['file_name']}";
         $this->initFileLineNo();
     }
@@ -31,7 +33,7 @@ class YakLogReader {
      * @param $file
      * 根据指针来读数据
      */
-    public function readLines($logtype, $file) {
+    public function readLines($param, $file) {
         $file_obj = new SplFileObject($file, "r");
         $line_no = $this->getLineNo($file);
         YakTools::Logger("{$file}=开始行号：{$line_no}");
@@ -43,9 +45,9 @@ class YakLogReader {
             $file_obj->next();
             $line_info = trim($line_info);
             if(trim($line_info) == "") continue;
-            //todo:这里可以处理数据的流向
-            file_put_contents(YAK_LOG."/runtime/test.log", "【{$logtype}】... {$line_info}\n", FILE_APPEND);
+            $this->storage->store($param, $line_info);
         }
+        $this->storage->flush($param);
         $line_index = $line_index == 0 ? 0 : $line_index -1 ;
         $new_line_no = $line_no + $line_index;
         YakTools::Logger("{$file}=结束行号：{$new_line_no}");

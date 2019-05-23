@@ -142,4 +142,25 @@ class YakTools {
         }
     }
 
+    /**
+     * @param $events
+     * array(
+     * [wd] => 1
+     * [mask] => 256
+     * [cookie] => 0
+     * [name] => 1458.log
+     * )
+     * @return array
+     */
+    public static function eventUnique($events) {
+        $newEvents = [];
+        foreach ($events as $event) {
+            $unique = "{$event['wd']}_{$event['mask']}_{$event['name']}";
+            if(empty($newEvents[$unique])) {
+                $newEvents[$unique] = $event;
+            }
+        }
+        return $newEvents;
+    }
+
 }

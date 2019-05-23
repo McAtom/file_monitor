@@ -6,17 +6,23 @@
  * Time: 10:39
  * 配置监控的日志总类别
  */
-return array(
-    'test' => array(
-        'file_paths' => array(
-            'login' => '/data/project/logs/login',
-            'reg' => '/data/project/logs/reg',
-        )
-    ),
+return [
+    'test' => [
+        'logs' => [
+            'login' => [
+                'path' => '/data/project/logs/login',
+                'storage' => 'console',
+            ],
+//            'reg' => [
+//                'path' => '/data/project/logs/reg',
+//                'storage' => 'file',
+//            ]
+        ]
+    ],
     'sdklog' => array(
 
     ),
     'adweblog' => array(
 
     )
-);
+];
