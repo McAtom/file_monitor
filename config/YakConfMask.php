@@ -25,6 +25,7 @@ return array(
     8192 => array('IN_UNMOUNT','File system containing watched object was unmounted'),
     16384 => array('IN_Q_OVERFLOW','Event queue overflowed (wd is -1 for this event)'),
     32768 => array('IN_IGNORED','Watch was removed (explicitly by inotify_rm_watch() or because file was removed or filesystem unmounted'),
+
     1073741824 => array('IN_ISDIR','Subject of this event is a directory'),
     1073741840 => array('IN_CLOSE_NOWRITE','High-bit: File not opened for writing was closed'),
     1073741856 => array('IN_OPEN','High-bit: File was opened'),

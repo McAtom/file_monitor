@@ -9,14 +9,18 @@
 return [
     'test' => [
         'logs' => [
-//            'login' => [
-//                'path' => '/data/project/logs/login',
-//                'storage' => 'file',
-//            ],
-//            'reg' => [
-//                'path' => '/data/project/logs/reg',
-//                'storage' => 'file',
-//            ],
+            'login' => [
+                'path' => '/data/project/logs/login',
+                'storage' => 'file',
+            ],
+            'reg' => [
+                'path' => '/data/project/logs/reg',
+                'storage' => 'file',
+            ],
+        ]
+    ],
+    'test1' => [
+        'logs' => [
             'login01' => [
                 'path' => '/data/project/logs/login01',
                 'storage' => 'file',

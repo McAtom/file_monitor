@@ -4,6 +4,10 @@
  * User: mcatom
  * Date: 2019-04-23
  * Time: 16:41
+ * inotify的资源限制可以通过/proc文件系统来修改，涉及的接口有：
+    /proc/sys/fs/inotify/max_queued_events：指定每个inotify实例的事件队列的最大长度，即可以缓存的事件个数
+    /proc/sys/fs/inotify/max_user_instances：每个用户可以创建的inotify实例的个数
+    /proc/sys/fs/inotify/max_user_watches：每个用户可以监控的文件的上限
  */
 class YakInotify {
 
@@ -14,7 +18,7 @@ class YakInotify {
     private $monitor_mask = array();
 
     private $monitor_time_range = 1;        //监控日志事件1表示当天，2表示近2天
-    private $monitor_loop_time = 1;         //轮询2秒检查一次
+    private $monitor_loop_time = 5;         //轮询2秒检查一次
     private $fd_inotify = array();          //监控句柄，需要定时清除
     private $watch_handle = array();        //好像用不到
     //监控文件的几个事件
@@ -39,10 +43,9 @@ class YakInotify {
      * 预处理方法
      */
     public function pretreatment() {
-        echo $this->param['log_path']."============\n";
         $new_dirs = YakTools::scandirRec($this->param['log_path']);
         if(empty($new_dirs)) {
-            echo "要监控的目录为空\n";
+            YakTools::Logger("要监控的目录为空");
         }
         foreach ($new_dirs as $new_dir) {
             if($this->checkNewDirIfMonitor($new_dir['dir'], $new_dir['filename'])) {
@@ -56,15 +59,16 @@ class YakInotify {
 
     /**
      * 启动监控
+     * 可采用stream_select 方式来写数据，就不需要每个都去尝试inotify_read操作了
+     * https://www.cnblogs.com/jkko123/p/10861236.html
      */
     public function startWatch(){
         while(true) {
-            $t1 = microtime(true);
+            $ifQueueEvents = false;
             foreach ($this->fd_inotify as $path => $handle){
                 $events = inotify_read($handle);
                 if ($events) {
                     $events = YakTools::eventUnique($events);
-                    print_r($events);
                     foreach ($events as $event){
                         $change_file = "{$path}/{$event['name']}";
                         $change_event = $this->monitor_mask[$event['mask']][0];
@@ -72,6 +76,7 @@ class YakInotify {
 
                         if($change_event =='IN_CREATE' && is_dir($change_file)) {
                             if($this->checkNewDirIfMonitor($path, $event['name'])) {
+                                $this->initScanFile($change_file);          //因为目录如果不存在，一个进程写文件的同时创建目录，不会有modify的动作，所以需要扫描目录的文件
                                 $this->initInotify($change_file);
                             }
 
@@ -83,19 +88,17 @@ class YakInotify {
                         }
                     }
                 }
+                $ifQueueEvents = $ifQueueEvents === true ? $ifQueueEvents : (inotify_queue_len($handle) > 0 ? true : false);
             }
-            $div = microtime(true) - $t1;
-            YakTools::Logger("({$this->param['log_path']})时间差：{$div}");
-
-            sleep($this->monitor_loop_time);
-
             //定期检查清理无用变量
             $this->logread_now_times++;
             if($this->logread_now_times >= $this->logread_save_times) {
                 $this->clearResource();
             }
-
-            YakTools::Logger("======华丽的分割线======", $this->param['monitor_name']);
+            if($ifQueueEvents === false) {
+                sleep($this->monitor_loop_time);
+                YakTools::Logger("======小憩一下，喵喵喵...======", $this->param['monitor_name']);
+            }
         }
     }
 
@@ -161,7 +164,6 @@ class YakInotify {
      * 初始化扫描文件
      */
     private function initScanFile($dir) {
-        echo "扫描====".$dir."\n";
         if($handle = opendir($dir)) {
             while (false !== ($filename=readdir($handle))) {
                 if($filename == '.' || $filename == '..') {

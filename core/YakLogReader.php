@@ -34,10 +34,11 @@ class YakLogReader {
      * 根据指针来读数据
      */
     public function readLines($param, $file) {
+        $start_time = microtime(true);
+
         $file_obj = new SplFileObject($file, "r");
-        $line_no = $this->getLineNo($file);
-        YakTools::Logger("{$file}=开始行号：{$line_no}");
-        $file_obj->seek($line_no);
+        $start_line_no = $this->getLineNo($file);
+        $file_obj->seek($start_line_no);
         $line_index = 0;
         while(!$file_obj->eof()) {
             $line_info = $file_obj->current();
@@ -49,9 +50,12 @@ class YakLogReader {
         }
         $this->storage->flush($param);
         $line_index = $line_index == 0 ? 0 : $line_index -1 ;
-        $new_line_no = $line_no + $line_index;
-        YakTools::Logger("{$file}=结束行号：{$new_line_no}");
-        $this->record_lines[$file] = $new_line_no;
+        $stop_line_no = $start_line_no + $line_index;
+
+        $div_time = microtime(true) - $start_time;
+        YakTools::Logger("{$file}:[start_line={$start_line_no}, stop_line={$stop_line_no}, line_num={$line_index}, time={$div_time}");
+
+        $this->record_lines[$file] = $stop_line_no;
         $this->saveFileLineNo();
     }
 
