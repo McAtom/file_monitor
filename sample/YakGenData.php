@@ -49,6 +49,27 @@ class YakGenData {
         return $this;
     }
 
+    public function regn($id) {
+        $file_dir = $this->file_dir."reg{$id}";
+        $param = array(
+            'reg_game' => 'chuanqi',
+            'reg_recdate' => '2019-01-01'
+        );
+        $this->genLog($file_dir, $param);
+        return $this;
+    }
+
+    public function loginn($id) {
+        $file_dir = $this->file_dir."login{$id}";
+        $param = array(
+            'flg_game_rt' => 100,
+        );
+        $this->genLog($file_dir, $param);
+        return $this;
+    }
+
+
+
     public function view() {
         $file_dir = $this->file_dir.__FUNCTION__;
         $param = array(
@@ -75,6 +96,7 @@ class YakGenData {
         $dir = "{$file_dir}/{$this->file_date}";
         if(!file_exists($dir)) {
             mkdir($dir, 0777, true);
+//            sleep(10);
         }
         for ($i = 1; $i <= $this->record_num; $i++) {
             $time = time();
@@ -93,7 +115,8 @@ class YakGenData {
             }
             $file = "{$dir}/".date("Hi", $time).".log";
             file_put_contents($file, json_encode($data)."\n", FILE_APPEND);
-            usleep(10000);     //0.01秒
+            //1000000 = 1sec
+            usleep(100000);
         }
     }
 }
@@ -104,5 +127,12 @@ if(empty($_GET['log'])) {
     die("请带上log参数\n");
 }
 $method = $_GET['log'];
-$gen = new YakGenData();
-$gen->setParam(5000)->$method();
+list($log, $id) = explode("_", $method);
+if(empty($id)) {
+    $gen = new YakGenData();
+    $gen->setParam(100)->$method();
+} else {
+    $gen = new YakGenData();
+    $method = $log."n";
+    $gen->setParam(140000)->$method($id);
+}
